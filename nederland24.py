@@ -22,6 +22,7 @@ import re
 import urlparse
 import httplib
 from BeautifulSoup import BeautifulStoneSoup, SoupStrainer
+import info123
 
 xbmc.log("plugin.video.nederland24:: Starting Addon")
 
@@ -44,7 +45,7 @@ REF_URL = 'http://www.npo.nl'
 TOKEN_URL = 'http://ida.omroep.nl/npoplayer/i.js'
 
 CHANNELS = [
-  
+
   ["NPO 101","npo_101.png","thematv/101tv/101tv.isml/101tv.m3u8","Weg met suffe en saaie tv! Het is tijd voor NPO 101, het 24-uurs jongerenkanaal van BNN en de Publieke Omroep. Met rauwe en brutale programma's, van en voor jongeren. Boordevol hilarische fragmenten, spannende livegames, bizarre experimenten en nieuws over festivals en gratis concertkaartjes. Kijken dus!"],
   ["NPO Best","npo_best.png","thematv/best24/best24.isml/best24.m3u8","NPO Best brengt hoogtepunten uit ruim zestig jaar Nederlandse televisiehistorie. Het is een feelgoodzender waarop u 24 uur per dag de mooiste programma's uit de schatkamer van de Publieke Omroep kunt zien."],
   ["NPO Cultura","npo_cultura.png","thematv/cultura24/cultura24.isml/cultura24.m3u8","NPO Cultura is het digitale themakanaal van de Publieke Omroep voor verdieping in kunst en cultuur. 24 uur per dag programma's uit genres als klassiek, literatuur, dans, theater, pop, jazz, film, drama en beeldende kunst."],
@@ -60,6 +61,12 @@ CHANNELS = [
   ["NPO Radio 2","npo_radio2.png","visualradio/radio2/radio2.isml/radio2.m3u8","Informatie, actualiteit en het beste uit vijftig jaar popmuziek. Een toegankelijke zender met veel aandacht voor het Nederlandse lied, kleinkunst en cabaret."],
   ["NPO 3FM","npo_3fm.png","visualradio/3fm/3fm.isml/3fm.m3u8","Op NPO 3FM staat de liefde voor muziek centraal. Samen met de luisteraar vindt NPO 3FM nieuwe muziek, nieuw Nederlands poptalent en jong radiotalent. Je komt onze dj's vaak tegen op festivals en concerten."],
 ]
+
+CHANNEL_TO_TVGIDS_MAP = {
+    "NPO 1": "1",
+    "NPO 2": "2",
+    "NPO 3": "3",
+}
 
 ###
 def index():
@@ -143,13 +150,18 @@ def collect_token():
 def addLink(name, url, mode, iconimage, description):
     u = sys.argv[0]+"?url="+urllib.quote_plus(url)+"&mode="+urllib.quote_plus(mode)
     ok = True
-    liz = xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
+    program_title = get_program_title(name)
+    if (program_title):
+        list_name_str = "%s - %s" %(name, program_title)
+    else:
+        list_name_str = name
+    liz = xbmcgui.ListItem(list_name_str, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
     liz.setInfo(type="Video", infoLabels={"Title": name,
     	                                  "Plot":description,
     	                                  "TVShowTitle":name,
     	                                  "Playcount": 0,
     	                                  })
-    
+
     liz.setProperty("fanart_image", os.path.join(IMG_DIR, "fanart.png"))
     liz.setProperty('IsPlayable', 'true')
     ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=u, listitem=liz)
@@ -200,14 +212,37 @@ def parameters_string_to_dict(parameters):
                 paramDict[paramSplits[0]] = paramSplits[1]
     return paramDict
 
+def get_program_title(channel_name):
+    title = ""
+    if not CHANNEL_TO_TVGIDS_MAP.has_key(channel_name):
+        return title
+    try:
+        channel=CHANNEL_TO_TVGIDS_MAP.get(channel_name)
+        prog = tv.get_current_program(channel)
+        title = prog['titel']
+        # xbmc.log("Nu op nederland 1: " + prog['titel'] + "\nvan: " + prog['datum_start'] + "\ntot: " + prog['datum_end'])
+    except KeyError:
+        xbmc.log("Channel %s not found" %channel)
+    except  Exception as e:
+        xbmc.log("Error obtaining the program on channel %s. %s" % (channel_name, e))
+    return title
+
+def update_tvgids():
+    try:
+        tv.update()
+        xbmc.log("tv guide update successfully finished!")
+    except Exception as e:
+        xbmc.log("Unable to connect to the server. %s" %e)
+        return title
+
 
 params = parameters_string_to_dict(sys.argv[2])
 mode = urllib.unquote_plus(params.get('mode', ''))
 url = urllib.unquote_plus(params.get('url', ''))
-
+tv = info123.info123()
+update_tvgids()
 
 if mode == "playVideo":
     playVideo(url)
 else:
     index()
-
