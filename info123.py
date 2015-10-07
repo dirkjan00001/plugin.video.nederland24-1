@@ -44,8 +44,8 @@ class info123:
             channel_info_list = channel_info
 
         for program in channel_info_list:
-            datetime_start = self.strip_time(program['datum_start'], "%Y-%m-%d %H:%M:%S")
-            datetime_stop  = self.strip_time(program['datum_end'],   "%Y-%m-%d %H:%M:%S")
+            datetime_start = self.strip_time(program['datum_start'])
+            datetime_stop  = self.strip_time(program['datum_end'])
             if (datetime_start <= datetime_prog and datetime_prog <= datetime_stop):
                 return program
         raise Exception('No program found')
@@ -66,7 +66,7 @@ class info123:
             return False    #return false on any Exception (file not found, no channel data, wrong date)
         return True
 
-    def strip_time(self, date_string, format_str):
+    def strip_time(self, date_string, format_str = "%Y-%m-%d %H:%M:%S"):
         try:
             t = datetime.strptime(date_string, format_str)
         except TypeError:
