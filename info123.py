@@ -10,10 +10,10 @@ except ImportError:
     from urllib2 import urlopen             # Fall back to Python 2's urllib2
 
 class info123:
-    def __init__(self, channelstring = "1,2,3"):
+    def __init__(self, channelstring = "1,2,3", cache_filename = "cache_info123.json"):
         self.data = []
         self.json_url = "http://www.tvgids.nl/json/lists/programs.php?channels=%s" %channelstring
-        self.cache_filename = "cache.json"
+        self.cache_filename = cache_filename
 
     def update(self, enable_caching = True):
         if enable_caching == True and self.json_read_file():

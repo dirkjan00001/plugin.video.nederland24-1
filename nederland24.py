@@ -239,7 +239,8 @@ def update_tvgids():
 params = parameters_string_to_dict(sys.argv[2])
 mode = urllib.unquote_plus(params.get('mode', ''))
 url = urllib.unquote_plus(params.get('url', ''))
-tv = info123.info123()
+cache_fname = xbmc.translatePath("special://temp/") + "cache_nederland24_info123.json"
+tv = info123.info123(cache_filename = cache_fname)
 update_tvgids()
 
 if mode == "playVideo":
